@@ -1,0 +1,4 @@
+R5T.Tools.SVN.Construction - A construction console-app for the library R5T.Tools.SVN.
+
+Goals
+
