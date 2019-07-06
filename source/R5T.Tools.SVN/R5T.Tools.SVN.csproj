@@ -4,4 +4,9 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>1701;1702;1591;1573</NoWarn>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\R5T.NetStandard.IO.Paths.Types\source\R5T.NetStandard.IO.Paths.Types\R5T.NetStandard.IO.Paths.Types.csproj" />
+    <ProjectReference Include="..\..\..\R5T.NetStandard.Logging.Types\source\R5T.NetStandard.Logging.Types\R5T.NetStandard.Logging.Types.csproj" />
+    <ProjectReference Include="..\..\..\R5T.NetStandard.OS\source\R5T.NetStandard.OS\R5T.NetStandard.OS.csproj" />
+  </ItemGroup>
 </Project>
