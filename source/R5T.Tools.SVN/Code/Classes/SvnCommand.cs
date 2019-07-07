@@ -9,6 +9,21 @@ namespace R5T.Tools.SVN
 {
     public class SvnCommand
     {
+        public const string NonValue = null;
+        public const string SvnIgnorePropertyName = "svn:ignore";
+
+
+        #region Static
+
+        public static bool IsValue(string value)
+        {
+            var output = value != SvnCommand.NonValue;
+            return output;
+        }
+
+        #endregion
+
+
         public FilePath SvnExecutableFilePath { get; }
         public ILogger Logger { get; }
 
