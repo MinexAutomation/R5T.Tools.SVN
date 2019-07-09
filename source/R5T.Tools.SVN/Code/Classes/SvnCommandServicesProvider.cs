@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
@@ -7,6 +8,7 @@ using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 
 using R5T.NetStandard;
+using R5T.NetStandard.IO;
 using R5T.NetStandard.IO.Paths;
 using R5T.NetStandard.OS;
 
@@ -19,7 +21,7 @@ namespace R5T.Tools.SVN
     {
         public static void Add(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
         {
-            logger.LogDebug($"Committing changes for {path}...");
+            logger.LogDebug($"Adding changes for {path}...");
 
             var arguments = $@"add ""{path}""";
 
@@ -50,17 +52,24 @@ namespace R5T.Tools.SVN
                 throw new Exception($"SVN automation failure.\nReceived:\n{svnOutput}");
             }
 
-            logger.LogInformation($"Committed changes for {path}.");
+            logger.LogInformation($"Added changes for {path}.");
         }
 
         /// <summary>
         /// Commits changes to the specified path and returns the revision number.
+        /// For directory paths, to commit only changes to the directory (for example, changes to SVN properties of the directory) and not changes within the directory, set the include all changes within path input to false.
         /// </summary>
-        public static int Commit(FilePath svnExecutableFilePath, AbsolutePath path, string message, ILogger logger)
+        public static int Commit(FilePath svnExecutableFilePath, AbsolutePath path, string message, ILogger logger, bool includeAllChangesWithinPath = true)
         {
             logger.LogDebug($"Committing changes for {path}...");
 
-            var arguments = $@"commit ""{path}"" -m ""{message}""";
+            var arguments = $@"commit ""{path}"" --message ""{message}""";
+
+            // For directory paths, you can commit ONLY the directory (and not changes within the directory) using the empty depth option.
+            if(!includeAllChangesWithinPath)
+            {
+                arguments.Append(" --depth empty");
+            }
 
             var svnOutputCollector = new StringBuilder();
             var runOptions = new ProcessRunOptions
@@ -83,6 +92,11 @@ namespace R5T.Tools.SVN
 
             var svnOutput = svnOutputCollector.ToString();
             var lines = svnOutput.Split(ArrayHelper.FromSingle(Environment.NewLine), StringSplitOptions.RemoveEmptyEntries);
+            if(lines.Length < 1)
+            {
+                return -1;
+            }
+
             var lastLine = lines.Last();
             var trimmedLastLine = lastLine.TrimEnd('.');
 
@@ -160,6 +174,55 @@ namespace R5T.Tools.SVN
             return output;
         }
 
+        public static void Delete(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        {
+            logger.LogDebug($"SVN deleting path {path}...");
+
+            var arguments = $@"delete ""{path}""";
+
+            var svnOutputCollector = new StringBuilder();
+            var runOptions = new ProcessRunOptions
+            {
+                Command = svnExecutableFilePath.Value,
+                Arguments = arguments,
+                ReceiveOutputData = (sender, e) =>
+                {
+                    if (e.Data is null)
+                    {
+                        return;
+                    }
+
+                    svnOutputCollector.AppendLine(e.Data);
+                },
+                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
+            };
+
+            ProcessRunner.Run(runOptions);
+
+            var svnOutput = svnOutputCollector.ToString();
+
+            bool success = false;
+            var expectedOutput = $"D         {path}";
+            using (var reader = new StringReader(svnOutput))
+            {
+                while (!reader.ReadLineIsEnd(out var line))
+                {
+                    if (expectedOutput == line)
+                    {
+                        success = true;
+                        break;
+                    }
+                }
+            }
+
+            if(!success)
+            {
+                throw new Exception($"SVN automation failure.\nReceived:\n{svnOutput}");
+            }
+
+            logger.LogInformation($"SVN deleted path {path}.");
+        }
+
         /// <summary>
         /// Deletes an SVN property from a path.
         /// Operation is idempotent.
@@ -195,7 +258,7 @@ namespace R5T.Tools.SVN
 
             ProcessRunner.Run(runOptions);
 
-            logger.LogInformation($"Deleted SVN property '{propertyName} of {path}...");
+            logger.LogInformation($"Deleted SVN property '{propertyName} of {path}.");
         }
 
         public static string GetPropertyValue(FilePath svnExecutableFilePath, AbsolutePath path, string propertyName, ILogger logger)

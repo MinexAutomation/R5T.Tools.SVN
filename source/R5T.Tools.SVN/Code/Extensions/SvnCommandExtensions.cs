@@ -19,10 +19,11 @@ namespace R5T.Tools.SVN
 
         /// <summary>
         /// Commits changes to the specified path and returns the revision number.
+        /// For directory paths, to commit only changes to the directory (for example, changes to SVN properties of the directory) and not changes within the directory, set the include all changes within path input to false.
         /// </summary>
-        public static int Commit(this SvnCommand svnCommand, AbsolutePath path, string message)
+        public static int Commit(this SvnCommand svnCommand, AbsolutePath path, string message, bool includeAllChangesWithinPath = true)
         {
-            var revision = SvnCommandServicesProvider.Commit(svnCommand.SvnExecutableFilePath, path, message, svnCommand.Logger);
+            var revision = SvnCommandServicesProvider.Commit(svnCommand.SvnExecutableFilePath, path, message, svnCommand.Logger, includeAllChangesWithinPath);
             return revision;
         }
 
@@ -36,6 +37,11 @@ namespace R5T.Tools.SVN
         {
             var output = SvnCommandServicesProvider.ListProperties(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
             return output;
+        }
+
+        public static void Delete(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            SvnCommandServicesProvider.Delete(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
         }
 
         public static void DeleteProperty(this SvnCommand svnCommand, AbsolutePath path, string propertyName)
