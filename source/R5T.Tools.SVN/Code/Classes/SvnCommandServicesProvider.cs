@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
 using Microsoft.Extensions.Logging;
 
+using R5T.NetStandard;
 using R5T.NetStandard.IO.Paths;
 using R5T.NetStandard.OS;
 
@@ -15,6 +17,90 @@ namespace R5T.Tools.SVN
 {
     public static class SvnCommandServicesProvider
     {
+        public static void Add(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        {
+            logger.LogDebug($"Committing changes for {path}...");
+
+            var arguments = $@"add ""{path}""";
+
+            var svnOutputCollector = new StringBuilder();
+            var runOptions = new ProcessRunOptions
+            {
+                Command = svnExecutableFilePath.Value,
+                Arguments = arguments,
+                ReceiveOutputData = (sender, e) =>
+                {
+                    if (e.Data is null)
+                    {
+                        return;
+                    }
+
+                    svnOutputCollector.AppendLine(e.Data);
+                },
+                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
+            };
+
+            ProcessRunner.Run(runOptions);
+
+            var svnOutput = svnOutputCollector.ToString();
+
+            var expectedOutput = $"A         {path}\r\n";
+            if(svnOutput != expectedOutput)
+            {
+                throw new Exception($"SVN automation failure.\nReceived:\n{svnOutput}");
+            }
+
+            logger.LogInformation($"Committed changes for {path}.");
+        }
+
+        /// <summary>
+        /// Commits changes to the specified path and returns the revision number.
+        /// </summary>
+        public static int Commit(FilePath svnExecutableFilePath, AbsolutePath path, string message, ILogger logger)
+        {
+            logger.LogDebug($"Committing changes for {path}...");
+
+            var arguments = $@"commit ""{path}"" -m ""{message}""";
+
+            var svnOutputCollector = new StringBuilder();
+            var runOptions = new ProcessRunOptions
+            {
+                Command = svnExecutableFilePath.Value,
+                Arguments = arguments,
+                ReceiveOutputData = (sender, e) =>
+                {
+                    if (e.Data is null)
+                    {
+                        return;
+                    }
+
+                    svnOutputCollector.AppendLine(e.Data);
+                },
+                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
+            };
+
+            ProcessRunner.Run(runOptions);
+
+            var svnOutput = svnOutputCollector.ToString();
+            var lines = svnOutput.Split(ArrayHelper.FromSingle(Environment.NewLine), StringSplitOptions.RemoveEmptyEntries);
+            var lastLine = lines.Last();
+            var trimmedLastLine = lastLine.TrimEnd('.');
+
+            var tokens = trimmedLastLine.Split(' ');
+            if(tokens[0] != "Committed" || tokens[1] != "revision")
+            {
+                throw new Exception($"SVN automation failure.\nReceived:\n{lastLine}");
+            }
+
+            var revisionString = tokens[2];
+
+            var revision = Int32.Parse(revisionString);
+
+            logger.LogInformation($"Committed changes for {path}.");
+
+            return revision;
+        }
+
         public static bool HasProperty(FilePath svnExecutableFilePath, AbsolutePath path, string propertyName, ILogger logger)
         {
             logger.LogDebug($"Testing existence of SVN property {propertyName} for {path}...");
@@ -23,7 +109,7 @@ namespace R5T.Tools.SVN
 
             var hasProperty = properties.Contains(propertyName);
 
-            logger.LogDebug($"Tested existence of SVN property {propertyName} for {path}.");
+            logger.LogInformation($"Tested existence of SVN property {propertyName} for {path}.");
 
             return hasProperty;
         }

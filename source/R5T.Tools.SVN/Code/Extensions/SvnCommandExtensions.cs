@@ -12,6 +12,20 @@ namespace R5T.Tools.SVN
     {
         #region Common
 
+        public static void Add(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            SvnCommandServicesProvider.Add(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
+        }
+
+        /// <summary>
+        /// Commits changes to the specified path and returns the revision number.
+        /// </summary>
+        public static int Commit(this SvnCommand svnCommand, AbsolutePath path, string message)
+        {
+            var revision = SvnCommandServicesProvider.Commit(svnCommand.SvnExecutableFilePath, path, message, svnCommand.Logger);
+            return revision;
+        }
+
         public static bool HasProperty(this SvnCommand svnCommand, AbsolutePath path, string propertyName)
         {
             var output = SvnCommandServicesProvider.HasProperty(svnCommand.SvnExecutableFilePath, path, propertyName, svnCommand.Logger);
