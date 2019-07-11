@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="SvnTypes"
+    targetNamespace="urn:SvnTypes.xsd"
+    elementFormDefault="qualified"
+    xmlns="urn:SvnTypes.xsd"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+>
+  
+  <!--Based on https://svn.haxx.se/dev/archive-2005-08/att-0103/svntypes.xsd__charset_UTF-8 -->
+
+  <!-- Basic types, will be extracted to svntypes.xsd -->
+  <!-- KindType: folder or file, string -->
+  <xs:simpleType name="KindType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="dir"/>
+      <xs:enumeration value="file"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- NameType: folder/filename, string -->
+  <xs:simpleType name="NameType">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <!-- AuthorType: committer, string -->
+  <xs:simpleType name="AuthorType">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <!-- DateType: date & time of the revision, dateTime -->
+  <xs:simpleType name="DateType">
+    <xs:restriction base="xs:dateTime"/>
+  </xs:simpleType>
+
+  <!-- PathType: path; folder or file, string -->
+  <xs:simpleType name="PathType">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <!-- RevisionType: revision, integer -->
+  <xs:simpleType name="RevisionType">
+    <xs:restriction base="xs:unsignedInt"/>
+  </xs:simpleType>
+
+  <!-- LineNumberType: revision, integer -->
+  <xs:simpleType name="LineNumberType">
+    <xs:restriction base="xs:unsignedInt"/>
+  </xs:simpleType>
+
+  <!-- SizeType: size of file, integer -->
+  <xs:simpleType name="SizeType">
+    <xs:restriction base="xs:unsignedInt"/>
+  </xs:simpleType>
+
+  <!-- MessageType: commit message, string -->
+  <xs:simpleType name="MessageType">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <!-- TokenType: lock token, string -->
+  <xs:simpleType name="TokenType">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <!-- ActionType: one character: A D M or R     -->
+  <xs:simpleType name="ActionType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[ADMR]"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- CommitType:  info about last commit of the current line -->
+  <xs:complexType name="CommitType">
+    <xs:sequence>
+      <xs:element name="author" type="AuthorType" minOccurs="0"/>
+      <xs:element name="date" type="DateType" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="revision" type="RevisionType" use="required"/>
+  </xs:complexType>
+  
+</xs:schema>

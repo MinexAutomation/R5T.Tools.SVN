@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="SvnStatus"
+    targetNamespace="urn:SvnStatus.xsd"
+    elementFormDefault="qualified"
+    xmlns="urn:SvnStatus.xsd"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:svnTypes="urn:SvnTypes.xsd"
+>
+  <xs:import namespace="urn:SvnTypes.xsd" schemaLocation="svntypes.xsd"/>
+
+  <!--Based on https://svn.haxx.se/dev/archive-2005-08/att-0103/svnstatus.xsd__charset_UTF-8 -->
+
+  <!-- status: root element -->
+  <xs:element name="status" type="StatusType"/>
+
+  <xs:complexType name="StatusType">
+    <xs:sequence>
+      <xs:element name="target" type="TargetType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- TargetType: collection of targets -->
+  <xs:complexType name="TargetType">
+    <xs:sequence>
+      <xs:element name="entry" type="StatusEntryType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="against" type="AgainstType" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="path" type="svnTypes:PathType" use="required"/>
+  </xs:complexType>
+
+  <!-- StatusEntryType: status of an item in wc -->
+  <xs:complexType name="StatusEntryType">
+    <xs:sequence>
+      <xs:element name="wc-status" type="WorkingCopyStatusType"/>
+      <xs:element name="repos-status" type="RepositoryStatusType" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="path" type="svnTypes:PathType" use="required"/>
+  </xs:complexType>
+
+  <!-- WorkingCopyStatusType: status of an item in the wc -->
+  <xs:complexType name="WorkingCopyStatusType">
+    <xs:sequence>
+      <xs:element name="commit" type="svnTypes:CommitType" minOccurs="0"/>
+      <xs:element name="lock" type="LockType" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="item" type="WorkingCopyItemType" use="required"/>
+    <xs:attribute name="props" type="WorkingCopyPropertiesType" use="required"/>
+    <xs:attribute name="revision" type="svnTypes:RevisionType"/>
+    <xs:attribute name="wc-locked" type="xs:boolean"/>
+    <xs:attribute name="copied" type="xs:boolean"/>
+    <xs:attribute name="switched" type="xs:boolean"/>
+  </xs:complexType>
+
+  <!-- RepositoryStatusType: status of an item in the repos -->
+  <xs:complexType name="RepositoryStatusType">
+    <xs:sequence>
+      <xs:element name="lock" type="LockType" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="item" type="RepositoryItemType" use="required"/>
+    <xs:attribute name="props" type="RepositoryPropertiesType" use="required"/>
+  </xs:complexType>
+
+  <!-- WorkingCopyItemType: action on one item -->
+  <xs:simpleType name="WorkingCopyItemType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="added"/>
+      <xs:enumeration value="conflicted"/>
+      <xs:enumeration value="deleted"/>
+      <xs:enumeration value="ignored"/>
+      <xs:enumeration value="modified"/>
+      <xs:enumeration value="replaced"/>
+      <xs:enumeration value="external"/>
+      <xs:enumeration value="unversioned"/>
+      <xs:enumeration value="incomplete"/>
+      <xs:enumeration value="obstructed"/>
+      <xs:enumeration value="normal"/>
+      <xs:enumeration value="none"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- RepositoryItemType: action on one item -->
+  <xs:simpleType name="RepositoryItemType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="added"/>
+      <xs:enumeration value="deleted"/>
+      <xs:enumeration value="modified"/>
+      <xs:enumeration value="replaced"/>
+      <xs:enumeration value="none"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- WorkingCopyPropertiesType: action on a property in wc -->
+  <xs:simpleType name="WorkingCopyPropertiesType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="conflicted"/>
+      <xs:enumeration value="modified"/>
+      <xs:enumeration value="normal"/>
+      <xs:enumeration value="none"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- RepositoryPropertiesType: action on a property in the repos -->
+  <xs:simpleType name="RepositoryPropertiesType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="modified"/>
+      <xs:enumeration value="none"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- LockType:  info about a lock on the current line -->
+  <xs:complexType name="LockType">
+    <xs:sequence>
+      <xs:element name="token" type="svnTypes:TokenType"/>
+      <xs:element name="owner" type="svnTypes:AuthorType"/>
+      <xs:element name="comment" type="svnTypes:MessageType" minOccurs="0"/>
+      <xs:element name="created" type="svnTypes:DateType"/>
+      <xs:element name="expires" type="svnTypes:DateType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- AgainstType:  info about the revision against which the status was checked. -->
+  <xs:complexType name="AgainstType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="revision" type="svnTypes:RevisionType" use="required"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+</xs:schema>

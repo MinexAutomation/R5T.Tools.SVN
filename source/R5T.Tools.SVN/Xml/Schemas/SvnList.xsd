@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="SvnList"
+    targetNamespace="urn:SvnList.xsd"
+    elementFormDefault="qualified"
+    xmlns="urn:SvnList.xsd"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:svnTypes="urn:SvnTypes.xsd"
+>
+  <xs:import namespace="urn:SvnTypes.xsd" schemaLocation="svntypes.xsd"/>
+
+  <!--Based on https://svn.haxx.se/dev/archive-2005-08/att-0103/svnlist.xsd__charset_UTF-8 -->
+
+  <!-- lists: root element -->
+  <xs:element name="lists"/>
+
+  <xs:complexType name="ListsType">
+    <xs:sequence>
+      <xs:element name="list" type="ListType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ListType: describes one revision -->
+  <xs:complexType name="ListType">
+    <xs:sequence>
+      <xs:element name="entry" type="ListEntryType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="path" type="svnTypes:PathType" use="required"/>
+  </xs:complexType>
+
+  <!-- ListEntryType: collection of list elements -->
+  <xs:complexType name="ListEntryType">
+    <xs:sequence>
+      <xs:element name="name" type="svnTypes:NameType"/>
+      <xs:element name="size" type="svnTypes:SizeType" minOccurs="0"/>
+      <xs:element name="commit" type="svnTypes:CommitType"/>
+    </xs:sequence>
+    <xs:attribute name="kind" type="svnTypes:KindType" use="required"/>
+  </xs:complexType>
+
+</xs:schema>
