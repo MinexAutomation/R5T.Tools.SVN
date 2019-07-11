@@ -19,32 +19,36 @@ namespace R5T.Tools.SVN
 {
     public static class SvnCommandServicesProvider
     {
+        public static ProcessOutputCollector Run(FilePath svnExecutableFilePath, string arguments, bool throwIfAnyError = true)
+        {
+            var outputCollector = new ProcessOutputCollector();
+            var runOptions = new ProcessRunOptions
+            {
+                Command = svnExecutableFilePath.Value,
+                Arguments = arguments,
+                ReceiveOutputData = outputCollector.ReceiveOutputData,
+                ReceiveErrorData = outputCollector.ReceiveErrorData,
+            };
+
+            ProcessRunner.Run(runOptions);
+
+            if (throwIfAnyError && outputCollector.AnyError)
+            {
+                throw new Exception($"SVN automation failure.\nReceived:\n{outputCollector.GetErrorText()}");
+            }
+
+            return outputCollector;
+        }
+
         public static void Add(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
         {
             logger.LogDebug($"Adding changes for {path}...");
 
             var arguments = $@"add ""{path}""";
 
-            var svnOutputCollector = new StringBuilder();
-            var runOptions = new ProcessRunOptions
-            {
-                Command = svnExecutableFilePath.Value,
-                Arguments = arguments,
-                ReceiveOutputData = (sender, e) =>
-                {
-                    if (e.Data is null)
-                    {
-                        return;
-                    }
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
 
-                    svnOutputCollector.AppendLine(e.Data);
-                },
-                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
-            };
-
-            ProcessRunner.Run(runOptions);
-
-            var svnOutput = svnOutputCollector.ToString();
+            var svnOutput = outputCollector.GetOutputText();
 
             var expectedOutput = $"A         {path}\r\n";
             if(svnOutput != expectedOutput)
@@ -71,27 +75,9 @@ namespace R5T.Tools.SVN
                 arguments.Append(" --depth empty");
             }
 
-            var svnOutputCollector = new StringBuilder();
-            var runOptions = new ProcessRunOptions
-            {
-                Command = svnExecutableFilePath.Value,
-                Arguments = arguments,
-                ReceiveOutputData = (sender, e) =>
-                {
-                    if (e.Data is null)
-                    {
-                        return;
-                    }
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
 
-                    svnOutputCollector.AppendLine(e.Data);
-                },
-                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
-            };
-
-            ProcessRunner.Run(runOptions);
-
-            var svnOutput = svnOutputCollector.ToString();
-            var lines = svnOutput.Split(ArrayHelper.FromSingle(Environment.NewLine), StringSplitOptions.RemoveEmptyEntries);
+            var lines = outputCollector.GetOutputLines().ToArray();
             if(lines.Length < 1)
             {
                 return -1;
@@ -134,26 +120,9 @@ namespace R5T.Tools.SVN
 
             var arguments = $@"proplist ""{path}"" --xml";
 
-            var svnOutputCollector = new StringBuilder();
-            var runOptions = new ProcessRunOptions
-            {
-                Command = svnExecutableFilePath.Value,
-                Arguments = arguments,
-                ReceiveOutputData = (sender, e) =>
-                {
-                    if (e.Data is null)
-                    {
-                        return;
-                    }
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
 
-                    svnOutputCollector.AppendLine(e.Data);
-                },
-                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
-            };
-
-            ProcessRunner.Run(runOptions);
-
-            var svnOutput = svnOutputCollector.ToString();
+            var svnOutput = outputCollector.GetOutputText();
             var document = XDocument.Parse(svnOutput);
 
             var properties = document.Element("properties");
@@ -174,36 +143,22 @@ namespace R5T.Tools.SVN
             return output;
         }
 
-        public static void Delete(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        public static void Delete(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger, bool force = false)
         {
             logger.LogDebug($"SVN deleting path {path}...");
 
             var arguments = $@"delete ""{path}""";
 
-            var svnOutputCollector = new StringBuilder();
-            var runOptions = new ProcessRunOptions
+            if(force)
             {
-                Command = svnExecutableFilePath.Value,
-                Arguments = arguments,
-                ReceiveOutputData = (sender, e) =>
-                {
-                    if (e.Data is null)
-                    {
-                        return;
-                    }
+                arguments = arguments.Append(" --force");
+            }
 
-                    svnOutputCollector.AppendLine(e.Data);
-                },
-                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
-            };
-
-            ProcessRunner.Run(runOptions);
-
-            var svnOutput = svnOutputCollector.ToString();
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
 
             bool success = false;
             var expectedOutput = $"D         {path}";
-            using (var reader = new StringReader(svnOutput))
+            using (var reader = outputCollector.GetOutputReader())
             {
                 while (!reader.ReadLineIsEnd(out var line))
                 {
@@ -217,7 +172,7 @@ namespace R5T.Tools.SVN
 
             if(!success)
             {
-                throw new Exception($"SVN automation failure.\nReceived:\n{svnOutput}");
+                throw new Exception($"SVN automation failure.\nReceived:\n{outputCollector.GetOutputText()}");
             }
 
             logger.LogInformation($"SVN deleted path {path}.");
@@ -233,30 +188,16 @@ namespace R5T.Tools.SVN
 
             var arguments = $@"propdel {propertyName} ""{path}""";
 
-            var runOptions = new ProcessRunOptions
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
+
+            var line = outputCollector.GetOutputTextTrimmed();
+
+            var expectedLine1 = $"property '{propertyName}' deleted from '{path}'.";
+            var expectedLine2 = $"Attempting to delete nonexistent property '{propertyName}' on '{path}'";
+            if (expectedLine1 != line && expectedLine2 != line)
             {
-                Command = svnExecutableFilePath.Value,
-                Arguments = arguments,
-                ReceiveOutputData = (sender, e) =>
-                {
-                    if (e.Data is null)
-                    {
-                        return;
-                    }
-
-                    var line = e.Data;
-
-                    var expectedLine1 = $"property '{propertyName}' deleted from '{path}'.";
-                    var expectedLine2 = $"Attempting to delete nonexistent property '{propertyName}' on '{path}'";
-                    if (expectedLine1 != line && expectedLine2 != line)
-                    {
-                        throw new Exception($"SVN automation failure.\nReceived:\n{line}");
-                    }
-                },
-                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
-            };
-
-            ProcessRunner.Run(runOptions);
+                throw new Exception($"SVN automation failure.\nReceived:\n{line}");
+            }
 
             logger.LogInformation($"Deleted SVN property '{propertyName} of {path}.");
         }
@@ -267,27 +208,11 @@ namespace R5T.Tools.SVN
 
             var arguments = $@"propget {propertyName} ""{path}"" --xml";
 
-            var svnOutputCollector = new StringBuilder();
-            var runOptions = new ProcessRunOptions
-            {
-                Command = svnExecutableFilePath.Value,
-                Arguments = arguments,
-                ReceiveOutputData = (sender, e) =>
-                {
-                    if (e.Data is null)
-                    {
-                        return;
-                    }
-
-                    svnOutputCollector.AppendLine(e.Data);
-                },
-                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
-            };
-
-            ProcessRunner.Run(runOptions);
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
 
             // Parse output.
-            var svnOutput = svnOutputCollector.ToString();
+            var svnOutput = outputCollector.GetOutputText();
+
             var document = XDocument.Parse(svnOutput);
 
             var properties = document.Element("properties");
@@ -319,30 +244,16 @@ namespace R5T.Tools.SVN
 
             var arguments = $@"propset {propertyName} {ignoreValue} ""{path}""";
 
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
+
             // Test for success.
-            var runOptions = new ProcessRunOptions
+            var line = outputCollector.GetOutputTextTrimmed();
+
+            var expectedLine = $"property '{propertyName}' set on '{path}'";
+            if (expectedLine != line)
             {
-                Command = svnExecutableFilePath.Value,
-                Arguments = arguments,
-                ReceiveOutputData = (sender, e) =>
-                {
-                    if (e.Data is null)
-                    {
-                        return;
-                    }
-
-                    var line = e.Data;
-
-                    var expectedLine = $"property '{propertyName}' set on '{path}'";
-                    if (expectedLine != line)
-                    {
-                        throw new Exception($"SVN automation failure.\nExpected output:\n{expectedLine}\nReceived:\n{line}");
-                    }
-                },
-                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
-            };
-
-            ProcessRunner.Run(runOptions);
+                throw new Exception($"SVN automation failure.\nExpected output:\n{expectedLine}\nReceived:\n{line}");
+            }
 
             logger.LogInformation($"Set value of SVN property {propertyName} for {path}.");
         }
@@ -353,32 +264,66 @@ namespace R5T.Tools.SVN
 
             var arguments = "--version --quiet";
 
-            var versionString = String.Empty;
-            var runOptions = new ProcessRunOptions
-            {
-                Command = svnExecutableFilePath.Value,
-                Arguments = arguments,
-                ReceiveOutputData = (sender, e) =>
-                {
-                    if(e.Data is null)
-                    {
-                        return;
-                    }
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
 
-                    var line = e.Data;
+            var line = outputCollector.GetOutputText();
 
-                    versionString = line;
-                },
-                ReceiveErrorData = ProcessRunOptions.DefaultReceiveErrorData,
-            };
-          
-            ProcessRunner.Run(runOptions);
+            var versionString = line;
 
             var version = Version.Parse(versionString);
 
             logger.LogInformation("Got svn version.");
 
             return version;
+        }
+
+        public static void Revert(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        {
+            logger.LogDebug($"SVN reverting {path}...");
+
+            var arguments = $@"revert ""{path}""";
+
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
+
+            // Check for success.
+            var line = outputCollector.GetOutputTextTrimmed();
+
+            var expectedLine = $"Reverted '{path}'";
+            if(expectedLine != line)
+            {
+                throw new Exception($"SVN automation failure.\nReceived:\n{outputCollector.GetOutputText()}");
+            }
+
+            logger.LogInformation($"SVN reverted {path}.");
+        }
+
+        public static int Update(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        {
+            logger.LogDebug($"SVN updating {path}...");
+
+            var arguments = $@"update ""{path}""";
+
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
+
+            var lines = new List<string>();
+            using (var reader = outputCollector.GetOutputReader())
+            {
+                while (!reader.ReadLineIsEnd(out var line))
+                {
+                    lines.Add(line);
+                }
+            }
+
+            var lastLine = lines.Last();
+            var trimmedLastLine = lastLine.TrimEnd('.');
+            var tokens = trimmedLastLine.Split(' ');
+            var revisionNumber = tokens[2];
+
+            var revision = Int32.Parse(revisionNumber);
+
+            logger.LogInformation($"SVN updated {path}.");
+
+            return revision;
         }
     }
 }
