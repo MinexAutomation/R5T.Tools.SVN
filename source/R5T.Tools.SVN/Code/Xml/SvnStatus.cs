@@ -24,8 +24,8 @@ namespace R5T.Tools.SVN.XML
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute("status", Namespace = "urn:SvnStatus.xsd", IsNullable = false)]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute("status", Namespace = "urn:SvnTypes.xsd", IsNullable = false)]
     public partial class StatusType
     {
 
@@ -52,7 +52,7 @@ namespace R5T.Tools.SVN.XML
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public partial class TargetType
     {
 
@@ -110,7 +110,7 @@ namespace R5T.Tools.SVN.XML
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public partial class StatusEntryType
     {
 
@@ -169,7 +169,7 @@ namespace R5T.Tools.SVN.XML
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public partial class RepositoryStatusType
     {
 
@@ -227,7 +227,7 @@ namespace R5T.Tools.SVN.XML
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public partial class WorkingCopyStatusType
     {
 
@@ -428,7 +428,7 @@ namespace R5T.Tools.SVN.XML
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public partial class AgainstType
     {
 
@@ -471,7 +471,7 @@ namespace R5T.Tools.SVN.XML
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public partial class LockType
     {
 
@@ -571,7 +571,7 @@ namespace R5T.Tools.SVN.XML
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "2.0.50727.3038")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public enum RepositoryPropertiesType
     {
 
@@ -586,7 +586,7 @@ namespace R5T.Tools.SVN.XML
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "2.0.50727.3038")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public enum WorkingCopyPropertiesType
     {
 
@@ -607,7 +607,7 @@ namespace R5T.Tools.SVN.XML
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "2.0.50727.3038")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public enum RepositoryItemType
     {
 
@@ -631,7 +631,7 @@ namespace R5T.Tools.SVN.XML
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "2.0.50727.3038")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnStatus.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public enum WorkingCopyItemType
     {
 

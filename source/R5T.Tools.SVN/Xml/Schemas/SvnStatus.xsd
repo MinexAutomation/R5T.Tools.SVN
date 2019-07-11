@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <xs:schema id="SvnStatus"
-    targetNamespace="urn:SvnStatus.xsd"
+    targetNamespace="urn:SvnTypes.xsd"
     elementFormDefault="qualified"
-    xmlns="urn:SvnStatus.xsd"
+    xmlns="urn:SvnTypes.xsd"
+    xmlns:tns="urn:SvnTypes.xsd"
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
-    xmlns:svnTypes="urn:SvnTypes.xsd"
 >
-  <xs:import namespace="urn:SvnTypes.xsd" schemaLocation="svntypes.xsd"/>
+  <xs:include schemaLocation="SvnTypes.xsd"/>
 
   <!--Based on https://svn.haxx.se/dev/archive-2005-08/att-0103/svnstatus.xsd__charset_UTF-8 -->
 
@@ -25,7 +25,7 @@
       <xs:element name="entry" type="StatusEntryType" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="against" type="AgainstType" minOccurs="0"/>
     </xs:sequence>
-    <xs:attribute name="path" type="svnTypes:PathType" use="required"/>
+    <xs:attribute name="path" type="PathType" use="required"/>
   </xs:complexType>
 
   <!-- StatusEntryType: status of an item in wc -->
@@ -34,18 +34,18 @@
       <xs:element name="wc-status" type="WorkingCopyStatusType"/>
       <xs:element name="repos-status" type="RepositoryStatusType" minOccurs="0"/>
     </xs:sequence>
-    <xs:attribute name="path" type="svnTypes:PathType" use="required"/>
+    <xs:attribute name="path" type="PathType" use="required"/>
   </xs:complexType>
 
   <!-- WorkingCopyStatusType: status of an item in the wc -->
   <xs:complexType name="WorkingCopyStatusType">
     <xs:sequence>
-      <xs:element name="commit" type="svnTypes:CommitType" minOccurs="0"/>
+      <xs:element name="commit" type="CommitType" minOccurs="0"/>
       <xs:element name="lock" type="LockType" minOccurs="0"/>
     </xs:sequence>
     <xs:attribute name="item" type="WorkingCopyItemType" use="required"/>
     <xs:attribute name="props" type="WorkingCopyPropertiesType" use="required"/>
-    <xs:attribute name="revision" type="svnTypes:RevisionType"/>
+    <xs:attribute name="revision" type="RevisionType"/>
     <xs:attribute name="wc-locked" type="xs:boolean"/>
     <xs:attribute name="copied" type="xs:boolean"/>
     <xs:attribute name="switched" type="xs:boolean"/>
@@ -110,11 +110,11 @@
   <!-- LockType:  info about a lock on the current line -->
   <xs:complexType name="LockType">
     <xs:sequence>
-      <xs:element name="token" type="svnTypes:TokenType"/>
-      <xs:element name="owner" type="svnTypes:AuthorType"/>
-      <xs:element name="comment" type="svnTypes:MessageType" minOccurs="0"/>
-      <xs:element name="created" type="svnTypes:DateType"/>
-      <xs:element name="expires" type="svnTypes:DateType" minOccurs="0"/>
+      <xs:element name="token" type="TokenType"/>
+      <xs:element name="owner" type="AuthorType"/>
+      <xs:element name="comment" type="MessageType" minOccurs="0"/>
+      <xs:element name="created" type="DateType"/>
+      <xs:element name="expires" type="DateType" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 
@@ -122,7 +122,7 @@
   <xs:complexType name="AgainstType">
     <xs:simpleContent>
       <xs:extension base="xs:string">
-        <xs:attribute name="revision" type="svnTypes:RevisionType" use="required"/>
+        <xs:attribute name="revision" type="RevisionType" use="required"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>

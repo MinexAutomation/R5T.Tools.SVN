@@ -3,6 +3,7 @@
     targetNamespace="urn:SvnTypes.xsd"
     elementFormDefault="qualified"
     xmlns="urn:SvnTypes.xsd"
+    xmlns:tns="urn:SvnTypes.xsd"
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
 >
   

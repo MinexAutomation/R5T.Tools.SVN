@@ -24,7 +24,77 @@ namespace R5T.Tools.SVN.XML
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnList.xsd")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute("lists", Namespace = "urn:SvnTypes.xsd", IsNullable = false)]
+    public partial class ListsType
+    {
+
+        private ListType[] listField;
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("list")]
+        public ListType[] list
+        {
+            get
+            {
+                return this.listField;
+            }
+            set
+            {
+                this.listField = value;
+            }
+        }
+    }
+
+
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "2.0.50727.3038")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
+    public partial class ListType
+    {
+
+        private ListEntryType[] entryField;
+
+        private string pathField;
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("entry")]
+        public ListEntryType[] entry
+        {
+            get
+            {
+                return this.entryField;
+            }
+            set
+            {
+                this.entryField = value;
+            }
+        }
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string path
+        {
+            get
+            {
+                return this.pathField;
+            }
+            set
+            {
+                this.pathField = value;
+            }
+        }
+    }
+
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "2.0.50727.3038")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnTypes.xsd")]
     public partial class ListEntryType
     {
 
@@ -102,50 +172,6 @@ namespace R5T.Tools.SVN.XML
             set
             {
                 this.kindField = value;
-            }
-        }
-    }
-
-
-
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "2.0.50727.3038")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace = "urn:SvnList.xsd")]
-    public partial class ListType
-    {
-
-        private ListEntryType[] entryField;
-
-        private string pathField;
-
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("entry")]
-        public ListEntryType[] entry
-        {
-            get
-            {
-                return this.entryField;
-            }
-            set
-            {
-                this.entryField = value;
-            }
-        }
-
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string path
-        {
-            get
-            {
-                return this.pathField;
-            }
-            set
-            {
-                this.pathField = value;
             }
         }
     }
