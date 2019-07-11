@@ -39,9 +39,9 @@ namespace R5T.Tools.SVN
             return output;
         }
 
-        public static void Delete(this SvnCommand svnCommand, AbsolutePath path)
+        public static void Delete(this SvnCommand svnCommand, AbsolutePath path, bool force = false)
         {
-            SvnCommandServicesProvider.Delete(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
+            SvnCommandServicesProvider.Delete(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger, force);
         }
 
         public static void DeleteProperty(this SvnCommand svnCommand, AbsolutePath path, string propertyName)
@@ -167,6 +167,17 @@ namespace R5T.Tools.SVN
         {
             var version = SvnCommandServicesProvider.GetVersion(svnCommand.SvnExecutableFilePath, svnCommand.Logger);
             return version;
+        }
+
+        public static void Revert(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            SvnCommandServicesProvider.Revert(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
+        }
+
+        public static int Update(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            var revision = SvnCommandServicesProvider.Update(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
+            return revision;
         }
 
         #endregion
