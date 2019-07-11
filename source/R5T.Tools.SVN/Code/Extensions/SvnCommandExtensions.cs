@@ -4,6 +4,7 @@ using System.Linq;
 
 using R5T.NetStandard.Extensions;
 using R5T.NetStandard.IO.Paths;
+using R5T.NetStandard.OS;
 
 
 namespace R5T.Tools.SVN
@@ -11,6 +12,15 @@ namespace R5T.Tools.SVN
     public static class SvnCommandExtensions
     {
         #region Common
+
+        /// <summary>
+        /// Allows direct access to run command.
+        /// </summary>
+        public static ProcessOutputCollector Run(this SvnCommand svnCommand, string arguments, bool throwIfAnyError = true)
+        {
+            var output = SvnCommandServicesProvider.Run(svnCommand.SvnExecutableFilePath, arguments, throwIfAnyError);
+            return output;
+        }
 
         public static void Add(this SvnCommand svnCommand, AbsolutePath path)
         {
