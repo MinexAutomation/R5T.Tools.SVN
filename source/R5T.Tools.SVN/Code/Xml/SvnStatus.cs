@@ -645,30 +645,36 @@ namespace R5T.Tools.SVN.XML
         deleted,
 
         /// <remarks/>
-        ignored,
-
-        /// <remarks/>
-        modified,
-
-        /// <remarks/>
-        replaced,
-
-        /// <remarks/>
         external,
 
         /// <remarks/>
-        unversioned,
+        ignored,
 
         /// <remarks/>
         incomplete,
 
         /// <remarks/>
-        obstructed,
+        merged,
+
+        /// <remarks/>
+        missing,
+
+        /// <remarks/>
+        modified,
+
+        /// <remarks/>
+        none,
 
         /// <remarks/>
         normal,
 
         /// <remarks/>
-        none,
+        obstructed,
+
+        /// <remarks/>
+        replaced,
+
+        /// <remarks/>
+        unversioned,
     }
 }

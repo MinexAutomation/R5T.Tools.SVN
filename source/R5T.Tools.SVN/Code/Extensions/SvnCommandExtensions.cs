@@ -179,6 +179,12 @@ namespace R5T.Tools.SVN
             return version;
         }
 
+        public static SvnPathStatus[] GetStatus(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            var output = SvnCommandServicesProvider.GetStatus(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
+            return output;
+        }
+
         public static void Revert(this SvnCommand svnCommand, AbsolutePath path)
         {
             SvnCommandServicesProvider.Revert(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
