@@ -10,7 +10,10 @@ using Microsoft.Extensions.Logging;
 using R5T.NetStandard;
 using R5T.NetStandard.IO;
 using R5T.NetStandard.IO.Paths;
+using R5T.NetStandard.IO.Serialization;
 using R5T.NetStandard.OS;
+
+using R5T.Tools.SVN.XML;
 
 using PathUtilities = R5T.NetStandard.IO.Paths.Utilities;
 
@@ -256,6 +259,39 @@ namespace R5T.Tools.SVN
             }
 
             logger.LogInformation($"Set value of SVN property {propertyName} for {path}.");
+        }
+
+        public static string GetStatusXmlText(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        {
+            logger.LogDebug($"Getting SVN status XML text for path {path}...");
+
+            var arguments = $@"status ""{path}"" -v --xml";
+
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
+
+            logger.LogDebug($"Got SVN status XML text of path {path}.");
+
+            var output = outputCollector.GetOutputText();
+            return output;
+        }
+
+        public static StatusType GetStatusXmlType(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        {
+            var statusXmlText = SvnCommandServicesProvider.GetStatusXmlText(svnExecutableFilePath, path, logger);
+
+            using (var stream = StreamHelper.FromString(statusXmlText))
+            {
+                var statusXmlType = XmlStreamSerializer.Deserialize<StatusType>(stream, SvnXml.DefaultNamespace);
+                return statusXmlType;
+            }
+        }
+
+        public static SvnPathStatus[] GetStatus(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        {
+            var statusXmlType = SvnCommandServicesProvider.GetStatusXmlType(svnExecutableFilePath, path, logger);
+
+            var output = statusXmlType.target.SelectMany(x => x.entry).Select(x => new SvnPathStatus { Path = x.path, ItemStatus = x.wcstatus.item.ToItemStatus() }).ToArray();
+            return output;
         }
 
         public static Version GetVersion(FilePath svnExecutableFilePath, ILogger logger)

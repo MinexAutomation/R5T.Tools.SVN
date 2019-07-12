@@ -8,7 +8,8 @@
 >
   <xs:include schemaLocation="SvnTypes.xsd"/>
 
-  <!--Based on https://svn.haxx.se/dev/archive-2005-08/att-0103/svnstatus.xsd__charset_UTF-8 -->
+  <!--Based on: https://svn.haxx.se/dev/archive-2005-08/att-0103/svnstatus.xsd__charset_UTF-8 -->
+  <!--Which is based on: https://svn.apache.org/repos/asf/subversion/trunk/subversion/svn/schema/status.rnc -->
 
   <!-- status: root element -->
   <xs:element name="status" type="StatusType"/>
@@ -66,15 +67,17 @@
       <xs:enumeration value="added"/>
       <xs:enumeration value="conflicted"/>
       <xs:enumeration value="deleted"/>
-      <xs:enumeration value="ignored"/>
-      <xs:enumeration value="modified"/>
-      <xs:enumeration value="replaced"/>
       <xs:enumeration value="external"/>
-      <xs:enumeration value="unversioned"/>
+      <xs:enumeration value="ignored"/>
       <xs:enumeration value="incomplete"/>
-      <xs:enumeration value="obstructed"/>
-      <xs:enumeration value="normal"/>
+      <xs:enumeration value="merged"/>
+      <xs:enumeration value="missing"/>
+      <xs:enumeration value="modified"/>
       <xs:enumeration value="none"/>
+      <xs:enumeration value="normal"/>
+      <xs:enumeration value="obstructed"/>
+      <xs:enumeration value="replaced"/>
+      <xs:enumeration value="unversioned"/>
     </xs:restriction>
   </xs:simpleType>
 

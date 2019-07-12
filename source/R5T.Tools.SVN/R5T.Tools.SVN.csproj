@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\R5T.NetStandard.IO.Paths.Types\source\R5T.NetStandard.IO.Paths.Types\R5T.NetStandard.IO.Paths.Types.csproj" />
+    <ProjectReference Include="..\..\..\R5T.NetStandard.IO.Serialization\source\R5T.NetStandard.IO.Serialization\R5T.NetStandard.IO.Serialization.csproj" />
     <ProjectReference Include="..\..\..\R5T.NetStandard.IO.Types\source\R5T.NetStandard.IO.Types\R5T.NetStandard.IO.Types.csproj" />
     <ProjectReference Include="..\..\..\R5T.NetStandard.Logging.Types\source\R5T.NetStandard.Logging.Types\R5T.NetStandard.Logging.Types.csproj" />
     <ProjectReference Include="..\..\..\R5T.NetStandard.OS\source\R5T.NetStandard.OS\R5T.NetStandard.OS.csproj" />
