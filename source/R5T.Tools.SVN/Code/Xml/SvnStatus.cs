@@ -239,7 +239,7 @@ namespace R5T.Tools.SVN.XML
 
         private WorkingCopyPropertiesType propsField;
 
-        private uint revisionField;
+        private int revisionField;
 
         private bool revisionFieldSpecified;
 
@@ -311,7 +311,7 @@ namespace R5T.Tools.SVN.XML
 
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public uint revision
+        public int revision
         {
             get
             {
@@ -432,13 +432,13 @@ namespace R5T.Tools.SVN.XML
     public partial class AgainstType
     {
 
-        private uint revisionField;
+        private int revisionField;
 
         private string valueField;
 
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public uint revision
+        public int revision
         {
             get
             {

@@ -34,7 +34,7 @@ namespace R5T.Tools.SVN.XML
 
         private bool dateFieldSpecified;
 
-        private uint revisionField;
+        private int revisionField;
 
         /// <remarks/>
         public string author
@@ -78,7 +78,7 @@ namespace R5T.Tools.SVN.XML
 
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public uint revision
+        public int revision
         {
             get
             {

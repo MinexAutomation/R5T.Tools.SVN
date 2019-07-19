@@ -40,7 +40,7 @@
 
   <!-- RevisionType: revision, integer -->
   <xs:simpleType name="RevisionType">
-    <xs:restriction base="xs:unsignedInt"/>
+    <xs:restriction base="xs:int"/>
   </xs:simpleType>
 
   <!-- LineNumberType: revision, integer -->
