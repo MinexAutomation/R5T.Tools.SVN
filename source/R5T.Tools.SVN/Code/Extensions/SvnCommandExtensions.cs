@@ -1,10 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
+using Microsoft.Extensions.Logging;
+
+using R5T.Neapolis;
 using R5T.NetStandard.Extensions;
+using R5T.NetStandard.IO;
 using R5T.NetStandard.IO.Paths;
+using R5T.NetStandard.IO.Serialization;
 using R5T.NetStandard.OS;
+
+using R5T.Tools.SVN.XML;
+
+using PathUtilities = R5T.NetStandard.IO.Paths.Utilities;
 
 
 namespace R5T.Tools.SVN
@@ -179,11 +189,228 @@ namespace R5T.Tools.SVN
             return version;
         }
 
-        public static SvnPathStatus[] GetStatus(this SvnCommand svnCommand, AbsolutePath path)
+        #region Status
+
+        /// <summary>
+        /// Get the SVN status results for a file or directory.
+        /// If the specified path is a file, a single result will be returned.
+        /// If the specified path is a directory, possibly many results will be returned.
+        /// If the path does not exist, zero results will be returned.
+        /// </summary>
+        public static SvnStringPathStatus[] Statuses(this SvnCommand svnCommand, AbsolutePath path)
         {
-            var output = SvnCommandServicesProvider.GetStatus(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
+            svnCommand.Logger.LogDebug($"Getting all SVN status results for path {path}...");
+
+            var arguments = SvnCommandServicesProvider.GetStatusVerbose(path);
+
+            var statuses = SvnCommandServicesProvider.GetStatuses(svnCommand.SvnExecutableFilePath, arguments);
+
+            svnCommand.Logger.LogInformation($"Got all SVN status results for path {path} ({statuses.Count()} results).");
+
+            return statuses;
+        }
+
+        public static SvnStringPathStatus[] Statuses(this SvnCommand svnCommand, IArgumentsBuilder argumentsBuilder)
+        {
+            svnCommand.Logger.LogDebug($"Getting all SVN status results...");
+
+            var statuses = SvnCommandServicesProvider.GetStatuses(svnCommand.SvnExecutableFilePath, argumentsBuilder);
+
+            svnCommand.Logger.LogInformation($"Got all SVN status results ({statuses.Count()} results).");
+
+            return statuses;
+        }
+
+        public static SvnStringPathStatus Status(this SvnCommand svnCommand, FilePath filePath)
+        {
+            svnCommand.Logger.LogDebug($"Getting SVN status of file path {filePath}...");
+
+            var arguments = SvnCommandServicesProvider.GetStatusVerboseForInstanceOnly(filePath);
+
+            var statuses = SvnCommandServicesProvider.GetStatuses(svnCommand.SvnExecutableFilePath, arguments);
+
+            var status = statuses.Count() < 1
+                ? new SvnStringPathStatus { Path = filePath.Value, ItemStatus = ItemStatus.None }
+                : statuses.Single() // Should be only 1.
+                ;
+
+            svnCommand.Logger.LogDebug($"Got SVN status of file path {filePath}.");
+
+            return status;
+        }
+
+        private static SvnStringPathStatus StatusRobust_Internal(this SvnCommand svnCommand, AbsolutePath absolutePath)
+        {
+            var arguments = SvnCommandServicesProvider.GetStatusVerboseForInstanceOnly(absolutePath)
+                .AddXml(); // Get XML.
+
+            var outputCollector = SvnCommandServicesProvider.Run(svnCommand.SvnExecutableFilePath, arguments, false);
+
+            if(outputCollector.AnyError)
+            {
+                var errorText = outputCollector.GetErrorText().Trim();
+
+                var notWorkingCopyText = $"svn: warning: W155007: '{absolutePath}' is not a working copy";
+                if(errorText == notWorkingCopyText)
+                {
+                    var output = new SvnStringPathStatus { Path = absolutePath.Value, ItemStatus = ItemStatus.NotWorkingCopy };
+                    return output;
+                }
+
+                var notFoundText = $"svn: warning: W155010: The node '{absolutePath}' was not found.";
+                if(errorText == notFoundText)
+                {
+                    var output = new SvnStringPathStatus { Path = absolutePath.Value, ItemStatus = ItemStatus.NotFound };
+                    return output;
+                }
+
+                throw new Exception($"Unknown SVN error:\n{errorText}");
+            }
+
+            var xmlText = outputCollector.GetOutputText();
+
+            using (var stream = StreamHelper.FromString(xmlText))
+            {
+                var xmlStatusType = XmlStreamSerializer.Deserialize<StatusType>(stream, SvnXml.DefaultNamespace);
+
+                var statuses = SvnCommandServicesProvider.GetStatuses(xmlStatusType);
+
+                var status = statuses.Count() < 1
+                    ? new SvnStringPathStatus { Path = absolutePath.Value, ItemStatus = ItemStatus.None }
+                    : statuses.Single() // Should be only 1.
+                    ;
+
+                return status;
+            }
+        }
+
+        public static SvnStringPathStatus StatusRobust(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            var status = svnCommand.StatusRobust_Internal(path);
+
+            if(status.ItemStatus != ItemStatus.NotFound)
+            {
+                return status;
+            }
+
+            // Determine whether the item was in an ignored directory, or an unversioned directory.
+            var parentItemStatus = ItemStatus.None;
+            var parentPath = path;
+            do
+            {
+                parentPath = PathUtilities.GetParentDirectoryPath(parentPath);
+
+                var parentStatus = svnCommand.StatusRobust_Internal(parentPath);
+
+                parentItemStatus = parentStatus.ItemStatus;
+            }
+            while (parentItemStatus == ItemStatus.NotFound);
+
+            var output = new SvnStringPathStatus { Path = path.Value, ItemStatus = parentItemStatus };
             return output;
         }
+
+        /// <summary>s
+        /// Get only the SVN status of a specific directory, and not its children.
+        /// If the directory path does not exist, returns a result with status <see cref="ItemStatus.None"/>.
+        /// </summary>
+        public static SvnStringPathStatus Status(this SvnCommand svnCommand, DirectoryPath directoryPath)
+        {
+            svnCommand.Logger.LogDebug($"Getting SVN status of directory path {directoryPath}...");
+
+            var arguments = SvnCommandServicesProvider.GetStatusVerboseForInstanceOnly(directoryPath);
+
+            var statuses = SvnCommandServicesProvider.GetStatuses(svnCommand.SvnExecutableFilePath, arguments);
+
+            var status = statuses.Count() < 1
+                ? new SvnStringPathStatus { Path = directoryPath.Value, ItemStatus = ItemStatus.None }
+                : statuses.Single() // Should be only 1.
+                ;
+
+            svnCommand.Logger.LogDebug($"Got SVN status of directory path {directoryPath}.");
+
+            return status;
+        }
+
+        public static SvnStringPathStatus[] StatusesDefault(this SvnCommand svnCommand, DirectoryPath directoryPath)
+        {
+            svnCommand.Logger.LogDebug($"Getting all SVN status results for directory path {directoryPath}...");
+
+            var arguments = SvnCommandServicesProvider.GetStatusVerbose(directoryPath);
+
+            var statuses = SvnCommandServicesProvider.GetStatuses(svnCommand.SvnExecutableFilePath, arguments);
+
+            svnCommand.Logger.LogInformation($"Got all SVN status results for directroy path {directoryPath} ({statuses.Count()} results).");
+
+            return statuses;
+        }
+
+        /// <summary>
+        /// Note that the default depth options IS infinity.
+        /// </summary>
+        public static SvnStringPathStatus[] StatusesInfinity(this SvnCommand svnCommand, DirectoryPath directoryPath)
+        {
+            svnCommand.Logger.LogDebug($"Getting all SVN status results for directory path {directoryPath}...");
+
+            var arguments = SvnCommandServicesProvider.GetStatusVerboseDepthInfinity(directoryPath);
+
+            var statuses = SvnCommandServicesProvider.GetStatuses(svnCommand.SvnExecutableFilePath, arguments);
+
+            svnCommand.Logger.LogInformation($"Got all SVN status results for directroy path {directoryPath} ({statuses.Count()} results).");
+
+            return statuses;
+        }
+
+        public static SvnStringPathStatus[] StatusesInfinityNoIgnore(this SvnCommand svnCommand, DirectoryPath directoryPath)
+        {
+            svnCommand.Logger.LogDebug($"Getting all SVN status results for directory path {directoryPath}...");
+
+            var arguments = SvnCommandServicesProvider.GetStatusVerboseDepthInfinityNoIgnore(directoryPath);
+
+            var statuses = SvnCommandServicesProvider.GetStatuses(svnCommand.SvnExecutableFilePath, arguments);
+
+            svnCommand.Logger.LogInformation($"Got all SVN status results for directroy path {directoryPath} ({statuses.Count()} results).");
+
+            return statuses;
+        }
+
+        /// <summary>
+        /// Get only the SVN status of a specific file or directory (and for directories, only the SVN status of the directory itself, and not its children).
+        /// If the path does not exist, returns a result with status <see cref="ItemStatus.None"/>.
+        /// </summary>
+        public static SvnPathStatus Status(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            // Allow for possibility that the path is a directory path. Find the entry matching the input path.
+            var statuses = svnCommand.Statuses(path);
+            if(statuses.Count() < 1)
+            {
+                var output = new SvnPathStatus { Path = new GeneralAbsolutePath(path.Value), ItemStatus = ItemStatus.None };
+                return output;
+            }
+
+            var status = statuses.Where(x => x.Path == path.Value).Select(x => new SvnPathStatus { Path = new GeneralAbsolutePath(x.Path), ItemStatus = x.ItemStatus }).Single(); // There should be at least one result.
+            return status;
+        }
+
+        //public static SvnFilePathStatus Status(this SvnCommand svnCommand, FilePath filePath)
+        //{
+
+        //}
+
+        //public static SvnDirectoryPathStatus Status(this SvnCommand svnCommand, DirectoryPath directoryPath)
+        //{
+
+        //}
+
+        //public static SvnPathStatus[] StatusOfChildren(this SvnCommand svnCommand, DirectoryPath directoryPath, bool recursive = true)
+        //{
+        //    // Note that the recursive argument translates to the --depth infinity argument, which does not ACTUALLY give the status of all elements in the directory tree!
+        //    // Only those unversioned elements that are within a versioned directory are included. For example, elements within an unversioned directory (which are themseles unversioned), would not appear in the SVN status --depth infinity output.
+        //}
+
+        #endregion
+
+
 
         public static void Revert(this SvnCommand svnCommand, AbsolutePath path)
         {

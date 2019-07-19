@@ -7,6 +7,7 @@ using System.Xml.Linq;
 
 using Microsoft.Extensions.Logging;
 
+using R5T.Neapolis;
 using R5T.NetStandard;
 using R5T.NetStandard.IO;
 using R5T.NetStandard.IO.Paths;
@@ -41,6 +42,43 @@ namespace R5T.Tools.SVN
             }
 
             return outputCollector;
+        }
+
+        public static ProcessOutputCollector Run(FilePath svnExecutableFilePath, IArgumentsBuilder argumentsBuilder, bool throwIfAnyError = true)
+        {
+            var arguments = argumentsBuilder.Build();
+
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments, throwIfAnyError);
+            return outputCollector;
+        }
+
+        public static string RunGetText(FilePath svnExecutableFilePath, IArgumentsBuilder argumentsBuilder, bool throwIfAnyError = true)
+        {
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, argumentsBuilder, throwIfAnyError);
+
+            var text = outputCollector.GetOutputText();
+            return text;
+        }
+
+        public static string RunGetXmlText(FilePath svnExecutableFilePath, IArgumentsBuilder argumentsBuilder, bool throwIfAnyError = true)
+        {
+            argumentsBuilder
+                .AddXml();
+                ;
+
+            var textXml = SvnCommandServicesProvider.RunGetText(svnExecutableFilePath, argumentsBuilder, throwIfAnyError);
+            return textXml;
+        }
+
+        public static TXmlType RunGetXmlType<TXmlType>(FilePath svnExecutableFilePath, IArgumentsBuilder argumentsBuilder, bool throwIfAnyError = true)
+        {
+            var xmlText = SvnCommandServicesProvider.RunGetXmlText(svnExecutableFilePath, argumentsBuilder, throwIfAnyError);
+
+            using (var stream = StreamHelper.FromString(xmlText))
+            {
+                var xmlType = XmlStreamSerializer.Deserialize<TXmlType>(stream, SvnXml.DefaultNamespace);
+                return xmlType;
+            }
         }
 
         public static void Add(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
@@ -261,6 +299,49 @@ namespace R5T.Tools.SVN
             logger.LogInformation($"Set value of SVN property {propertyName} for {path}.");
         }
 
+        public static string GetNewSvnArguments()
+        {
+            var output = String.Empty;
+            return output;
+        }
+
+        public static string AddToken(string arguments, string token)
+        {
+            var appendix = $" {token}"; // Note beginning space.
+
+            var output = arguments.Append(appendix);
+            return output;
+        }
+
+        public static string AddStatus(string svnArguments, string path)
+        {
+            var token = "status";
+
+            var output = SvnCommandServicesProvider.AddToken(svnArguments, token);
+            output = SvnCommandServicesProvider.AddPath(svnArguments, path);
+            return output;
+        }
+
+        public static string AddStatus(string svnArguments, AbsolutePath path)
+        {
+            var output = SvnCommandServicesProvider.AddStatus(svnArguments, path.Value);
+            return output;
+        }
+
+        public static string AddPath(string svnArguments, string path)
+        {
+            var token = $@"""{path}""";
+
+            var output = SvnCommandServicesProvider.AddToken(svnArguments, token);
+            return output;
+        }
+
+        public static string AddPath(string svnArguments, AbsolutePath path)
+        {
+            var output = SvnCommandServicesProvider.AddPath(svnArguments, path.Value);
+            return output;
+        }
+
         public static string GetStatusXmlText(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
         {
             logger.LogDebug($"Getting SVN status XML text for path {path}...");
@@ -269,7 +350,7 @@ namespace R5T.Tools.SVN
 
             var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
 
-            logger.LogDebug($"Got SVN status XML text of path {path}.");
+            logger.LogInformation($"Got SVN status XML text of path {path}.");
 
             var output = outputCollector.GetOutputText();
             return output;
@@ -277,7 +358,8 @@ namespace R5T.Tools.SVN
 
         public static StatusType GetStatusXmlType(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
         {
-            var statusXmlText = SvnCommandServicesProvider.GetStatusXmlText(svnExecutableFilePath, path, logger);
+            //var statusXmlText = SvnCommandServicesProvider.GetStatusXmlText(svnExecutableFilePath, path, logger);
+            var statusXmlText = SvnCommandServicesProvider.GetStatusXmlText2(svnExecutableFilePath, path, logger);
 
             using (var stream = StreamHelper.FromString(statusXmlText))
             {
@@ -286,11 +368,100 @@ namespace R5T.Tools.SVN
             }
         }
 
-        public static SvnPathStatus[] GetStatus(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        public static SvnStringPathStatus[] GetStatus(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
         {
             var statusXmlType = SvnCommandServicesProvider.GetStatusXmlType(svnExecutableFilePath, path, logger);
 
-            var output = statusXmlType.target.SelectMany(x => x.entry).Select(x => new SvnPathStatus { Path = x.path, ItemStatus = x.wcstatus.item.ToItemStatus() }).ToArray();
+            var output = statusXmlType.target
+                .Where(x => x.entry != null)
+                .SelectMany(x => x.entry)
+                    .Select(x => new SvnStringPathStatus { Path = x.path, ItemStatus = x.wcstatus.item.ToItemStatus() })
+                    .ToArray();
+            return output;
+        }
+
+        public static IArgumentsBuilder GetStatus(AbsolutePath path)
+        {
+            var argumentsBuilder = ArgumentsBuilder.New()
+                .AddVerb("status", verbBuilder =>
+                {
+                    verbBuilder
+                        .AddPath(path)
+                        ;
+                });
+            return argumentsBuilder;
+        }
+
+        public static IArgumentsBuilder GetStatusVerbose(AbsolutePath path)
+        {
+            var argumentsBuilder = SvnCommandServicesProvider.GetStatus(path)
+                .AddVerbose();
+
+            return argumentsBuilder;
+        }
+
+        public static IArgumentsBuilder GetStatusVerboseForInstanceOnly(AbsolutePath path)
+        {
+            var argumentsBuilder = SvnCommandServicesProvider.GetStatusVerbose(path)
+                .ForInstanceOnly();
+                
+            return argumentsBuilder;
+        }
+
+        public static IArgumentsBuilder GetStatusVerboseDepthInfinity(AbsolutePath path)
+        {
+            var argumentsBuilder = SvnCommandServicesProvider.GetStatusVerbose(path)
+                .SetDepth("infinity");
+
+            return argumentsBuilder;
+        }
+
+        public static IArgumentsBuilder GetStatusVerboseDepthInfinityNoIgnore(AbsolutePath path)
+        {
+            var argumentsBuilder = SvnCommandServicesProvider.GetStatusVerboseDepthInfinity(path)
+                .AddFlagFull("no-ignore");
+
+            return argumentsBuilder;
+        }
+
+        public static StatusType GetXmlStatusType(FilePath svnExecutableFilePath, IArgumentsBuilder argumentsBuilder)
+        {
+            var status = SvnCommandServicesProvider.RunGetXmlType<StatusType>(svnExecutableFilePath, argumentsBuilder);
+            return status;
+        }
+
+        public static SvnStringPathStatus[] GetStatuses(StatusType xmlStatusType)
+        {
+            var statuses = xmlStatusType.target
+                .Where(x => x.entry != null)
+                .SelectMany(x => x.entry)
+                    .Select(x => new SvnStringPathStatus { Path = x.path, ItemStatus = x.wcstatus.item.ToItemStatus() })
+                    .ToArray();
+
+            return statuses;
+        }
+
+        public static SvnStringPathStatus[] GetStatuses(FilePath svnExecutableFilePath, IArgumentsBuilder argumentsBuilder)
+        {
+            var xmlStatusType = SvnCommandServicesProvider.GetXmlStatusType(svnExecutableFilePath, argumentsBuilder);
+
+            var statuses = SvnCommandServicesProvider.GetStatuses(xmlStatusType);
+            return statuses;
+        }
+
+        public static string GetStatusXmlText2(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
+        {
+            logger.LogDebug($"Getting SVN status XML text for path {path}...");
+
+            var arguments = SvnCommandServicesProvider.GetStatusVerboseForInstanceOnly(path)
+                .AddFlagFull("xml")
+                .Build();
+
+            var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
+
+            logger.LogInformation($"Got SVN status XML text of path {path}.");
+
+            var output = outputCollector.GetOutputText();
             return output;
         }
 
