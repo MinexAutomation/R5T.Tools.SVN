@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 
 using R5T.NetStandard.IO.Paths;
 
+using R5T.Tools.SVN.Configuration;
+
 
 namespace R5T.Tools.SVN
 {
@@ -32,6 +34,11 @@ namespace R5T.Tools.SVN
         {
             this.SvnExecutableFilePath = svnExecutableFilePath;
             this.Logger = logger;
+        }
+
+        public SvnCommand(ISvnCommandConfiguration svnCommandConfiguration, ILogger<SvnCommand> logger)
+            : this(svnCommandConfiguration.SvnExecutableFilePath, logger)
+        {
         }
     }
 }

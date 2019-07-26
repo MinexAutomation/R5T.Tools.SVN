@@ -100,6 +100,31 @@ namespace R5T.Tools.SVN
             logger.LogInformation($"Added changes for {path}.");
         }
 
+        #region Checkout
+
+        public static IArgumentsBuilder GetCheckoutArguments(string repositoryUrl, string localDirectoryPath)
+        {
+            var argumentsBuilder = ArgumentsBuilder.New()
+                .AddVerb("checkout", verbBuilder =>
+                {
+                    verbBuilder
+                        .AddValue(repositoryUrl)
+                        .AddPath(localDirectoryPath)
+                        ;
+                });
+            return argumentsBuilder;
+        }
+
+        public static IArgumentsBuilder GetCheckoutArguments(Uri repositoryUrl, AbsolutePath localDirectoryPath)
+        {
+            var argumentsBuilder = SvnCommandServicesProvider.GetCheckoutArguments(repositoryUrl.ToString(), localDirectoryPath.Value);
+            return argumentsBuilder;
+        }
+
+        #endregion
+
+        #region Commit
+
         /// <summary>
         /// Commits changes to the specified path and returns the revision number.
         /// For directory paths, to commit only changes to the directory (for example, changes to SVN properties of the directory) and not changes within the directory, set the include all changes within path input to false.
@@ -141,6 +166,30 @@ namespace R5T.Tools.SVN
 
             return revision;
         }
+
+        #endregion
+
+        #region Info
+
+        public static IArgumentsBuilder GetInfoArguments(string path)
+        {
+            var argumentsBuilder = ArgumentsBuilder.New()
+                .AddVerb("info", verbBuilder =>
+                {
+                    verbBuilder
+                        .AddPath(path)
+                        ;
+                });
+            return argumentsBuilder;
+        }
+
+        public static IArgumentsBuilder GetInfoArguments(AbsolutePath path)
+        {
+            var argumentsBuilder = SvnCommandServicesProvider.GetInfoArguments(path);
+            return argumentsBuilder;
+        }
+
+        #endregion
 
         public static bool HasProperty(FilePath svnExecutableFilePath, AbsolutePath path, string propertyName, ILogger logger)
         {
@@ -342,6 +391,8 @@ namespace R5T.Tools.SVN
             return output;
         }
 
+        #region Status
+
         public static string GetStatusXmlText(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
         {
             logger.LogDebug($"Getting SVN status XML text for path {path}...");
@@ -464,6 +515,8 @@ namespace R5T.Tools.SVN
             var output = outputCollector.GetOutputText();
             return output;
         }
+
+        #endregion
 
         public static Version GetVersion(FilePath svnExecutableFilePath, ILogger logger)
         {

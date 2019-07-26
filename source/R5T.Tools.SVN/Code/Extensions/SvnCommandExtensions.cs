@@ -12,6 +12,7 @@ using R5T.NetStandard.IO.Paths;
 using R5T.NetStandard.IO.Serialization;
 using R5T.NetStandard.OS;
 
+using R5T.Tools.SVN.Extensions;
 using R5T.Tools.SVN.XML;
 
 using PathUtilities = R5T.NetStandard.IO.Paths.Utilities;
@@ -32,9 +33,63 @@ namespace R5T.Tools.SVN
             return output;
         }
 
+        public static ProcessOutputCollector Run(this SvnCommand svnCommand, IArgumentsBuilder arguments, bool throwIfAnyError = true)
+        {
+            var output = SvnCommandServicesProvider.Run(svnCommand.SvnExecutableFilePath, arguments, throwIfAnyError);
+            return output;
+        }
+
         public static void Add(this SvnCommand svnCommand, AbsolutePath path)
         {
             SvnCommandServicesProvider.Add(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
+        }
+
+        public static CheckoutResult Checkout(this SvnCommand svnCommand, string repositoryUrl, string localDirectoryPath)
+        {
+            svnCommand.Logger.LogDebug($"SVN checkout of '{repositoryUrl}' to '{localDirectoryPath}'...");
+
+            // Need to ensure the local directory path is NOT directory indicated (does NOT end with a directory separator).
+            var correctedLocalDirectoryPath = PathUtilities.EnsureFilePathNotDirectoryIndicated(localDirectoryPath);
+
+            var arguments = SvnCommandServicesProvider.GetCheckoutArguments(repositoryUrl, correctedLocalDirectoryPath);
+
+            var commandOutput = SvnCommandServicesProvider.Run(svnCommand.SvnExecutableFilePath, arguments);
+
+            var lines = commandOutput.GetOutputLines().ToList();
+
+            var lastLine = lines.Last();
+            var lastLineTokens = lastLine.Split(' ');
+            var revisionNumberToken = lastLineTokens.Last().TrimEnd('.');
+            var revisionNumber = Int32.Parse(revisionNumberToken);
+
+            var entryUpdateLines = lines.ExceptLast();
+            var statuses = new List<EntryUpdateStatus>();
+            foreach (var line in entryUpdateLines)
+            {
+                var lineTokens = line.Split(new[] { " " }, 2, StringSplitOptions.RemoveEmptyEntries);
+
+                var statusToken = lineTokens[0];
+                var relativePath = lineTokens[1];
+
+                var updateStatus = statusToken.ToUpdateStatus();
+
+                var status = new EntryUpdateStatus
+                {
+                    UpdateStatus = updateStatus,
+                    RelativePath = relativePath,
+                };
+                statuses.Add(status);
+            }
+
+            var result = new CheckoutResult
+            {
+                RevisionNumber = revisionNumber,
+                Statuses = statuses.ToArray(),
+            };
+
+            svnCommand.Logger.LogInformation($"SVN checkout of '{repositoryUrl}' to '{localDirectoryPath}' complete.");
+
+            return result;
         }
 
         /// <summary>
@@ -189,6 +244,19 @@ namespace R5T.Tools.SVN
             return version;
         }
 
+        public static void Revert(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            SvnCommandServicesProvider.Revert(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
+        }
+
+        public static int Update(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            var revision = SvnCommandServicesProvider.Update(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
+            return revision;
+        }
+
+        #endregion
+
         #region Status
 
         /// <summary>
@@ -246,19 +314,19 @@ namespace R5T.Tools.SVN
 
             var outputCollector = SvnCommandServicesProvider.Run(svnCommand.SvnExecutableFilePath, arguments, false);
 
-            if(outputCollector.AnyError)
+            if (outputCollector.AnyError)
             {
                 var errorText = outputCollector.GetErrorText().Trim();
 
                 var notWorkingCopyText = $"svn: warning: W155007: '{absolutePath}' is not a working copy";
-                if(errorText == notWorkingCopyText)
+                if (errorText == notWorkingCopyText)
                 {
                     var output = new SvnStringPathStatus { Path = absolutePath.Value, ItemStatus = ItemStatus.NotWorkingCopy };
                     return output;
                 }
 
                 var notFoundText = $"svn: warning: W155010: The node '{absolutePath}' was not found.";
-                if(errorText == notFoundText)
+                if (errorText == notFoundText)
                 {
                     var output = new SvnStringPathStatus { Path = absolutePath.Value, ItemStatus = ItemStatus.NotFound };
                     return output;
@@ -288,7 +356,7 @@ namespace R5T.Tools.SVN
         {
             var status = svnCommand.StatusRobust_Internal(path);
 
-            if(status.ItemStatus != ItemStatus.NotFound)
+            if (status.ItemStatus != ItemStatus.NotFound)
             {
                 return status;
             }
@@ -382,7 +450,7 @@ namespace R5T.Tools.SVN
         {
             // Allow for possibility that the path is a directory path. Find the entry matching the input path.
             var statuses = svnCommand.Statuses(path);
-            if(statuses.Count() < 1)
+            if (statuses.Count() < 1)
             {
                 var output = new SvnPathStatus { Path = new GeneralAbsolutePath(path.Value), ItemStatus = ItemStatus.None };
                 return output;
@@ -407,21 +475,6 @@ namespace R5T.Tools.SVN
         //    // Note that the recursive argument translates to the --depth infinity argument, which does not ACTUALLY give the status of all elements in the directory tree!
         //    // Only those unversioned elements that are within a versioned directory are included. For example, elements within an unversioned directory (which are themseles unversioned), would not appear in the SVN status --depth infinity output.
         //}
-
-        #endregion
-
-
-
-        public static void Revert(this SvnCommand svnCommand, AbsolutePath path)
-        {
-            SvnCommandServicesProvider.Revert(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
-        }
-
-        public static int Update(this SvnCommand svnCommand, AbsolutePath path)
-        {
-            var revision = SvnCommandServicesProvider.Update(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
-            return revision;
-        }
 
         #endregion
 
