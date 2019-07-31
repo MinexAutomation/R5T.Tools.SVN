@@ -102,6 +102,34 @@ namespace R5T.Tools.SVN
             return revision;
         }
 
+        public static void Delete(this SvnCommand svnCommand, AbsolutePath path, bool force = false)
+        {
+            SvnCommandServicesProvider.Delete(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger, force);
+        }
+
+        /// <summary>
+        /// Determine if a path is under source control.
+        /// </summary>
+        public static bool IsUnderSourceControl(this SvnCommand svnCommand, AbsolutePath path)
+        {
+            var status = svnCommand.StatusRobust(path);
+
+            switch(status.ItemStatus)
+            {
+                case ItemStatus.NotFound:
+                    throw new Exception("Ambigous status found. (Should never happen with use of robust status method.)");
+
+                case ItemStatus.None: // Non-existent path.
+                case ItemStatus.Ignored:
+                case ItemStatus.NotWorkingCopy:
+                case ItemStatus.Unversioned:
+                    return false;
+
+                default:
+                    return true;
+            }
+        }
+
         public static bool HasProperty(this SvnCommand svnCommand, AbsolutePath path, string propertyName)
         {
             var output = SvnCommandServicesProvider.HasProperty(svnCommand.SvnExecutableFilePath, path, propertyName, svnCommand.Logger);
@@ -112,11 +140,6 @@ namespace R5T.Tools.SVN
         {
             var output = SvnCommandServicesProvider.ListProperties(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
             return output;
-        }
-
-        public static void Delete(this SvnCommand svnCommand, AbsolutePath path, bool force = false)
-        {
-            SvnCommandServicesProvider.Delete(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger, force);
         }
 
         public static void DeleteProperty(this SvnCommand svnCommand, AbsolutePath path, string propertyName)
@@ -238,12 +261,6 @@ namespace R5T.Tools.SVN
             }
         }
 
-        public static Version GetVersion(this SvnCommand svnCommand)
-        {
-            var version = SvnCommandServicesProvider.GetVersion(svnCommand.SvnExecutableFilePath, svnCommand.Logger);
-            return version;
-        }
-
         public static void Revert(this SvnCommand svnCommand, AbsolutePath path)
         {
             SvnCommandServicesProvider.Revert(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
@@ -253,6 +270,12 @@ namespace R5T.Tools.SVN
         {
             var revision = SvnCommandServicesProvider.Update(svnCommand.SvnExecutableFilePath, path, svnCommand.Logger);
             return revision;
+        }
+
+        public static Version Version(this SvnCommand svnCommand)
+        {
+            var version = SvnCommandServicesProvider.GetVersion(svnCommand.SvnExecutableFilePath, svnCommand.Logger);
+            return version;
         }
 
         #endregion
@@ -352,6 +375,12 @@ namespace R5T.Tools.SVN
             }
         }
 
+        /// <summary>
+        /// Robustly determines the SVN status of a path using the output of the SVN status command.
+        /// Handles both files and directories, in the case of a directory the status of the directory only, and not all the file-system entries within it.
+        /// Handles warnings by turning them into into the associated <see cref="ItemStatus"/> value.
+        /// Resolves the ambiguous <see cref="ItemStatus.NotFound"/> item status by walking up the path hierarchy until an items status is found.
+        /// </summary>
         public static SvnStringPathStatus StatusRobust(this SvnCommand svnCommand, AbsolutePath path)
         {
             var status = svnCommand.StatusRobust_Internal(path);
@@ -361,7 +390,7 @@ namespace R5T.Tools.SVN
                 return status;
             }
 
-            // Determine whether the item was in an ignored directory, or an unversioned directory.
+            // Determine whether the item is in 1) an ignored directory or 2) an unversioned directory by walking up the path hierarchy until 
             var parentItemStatus = ItemStatus.None;
             var parentPath = path;
             do
