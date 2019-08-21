@@ -272,7 +272,7 @@ namespace R5T.Tools.SVN
             return revision;
         }
 
-        public static Version Version(this SvnCommand svnCommand)
+        public static Version GetVersion(this SvnCommand svnCommand)
         {
             var version = SvnCommandServicesProvider.GetVersion(svnCommand.SvnExecutableFilePath, svnCommand.Logger);
             return version;
