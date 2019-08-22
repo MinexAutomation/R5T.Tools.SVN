@@ -1,17 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>1701;1702;1591;1573</NoWarn>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="R5T.Neapolis" Version="0.0.1" />
-    <PackageReference Include="R5T.NetStandard.IO.Paths.Types" Version="0.0.1" />
-    <PackageReference Include="R5T.NetStandard.IO.Serialization" Version="0.0.1" />
-    <PackageReference Include="R5T.NetStandard.IO.Types" Version="0.0.1" />
+    <PackageReference Include="R5T.Neapolis" Version="0.0.2" />
+    <PackageReference Include="R5T.NetStandard.IO.Paths.Types" Version="0.0.2" />
+    <PackageReference Include="R5T.NetStandard.IO.Serialization" Version="0.0.2" />
+    <PackageReference Include="R5T.NetStandard.IO.Types" Version="0.0.2" />
     <PackageReference Include="R5T.NetStandard.Logging.Types" Version="0.0.1" />
-    <PackageReference Include="R5T.NetStandard.OS" Version="0.0.2" />
+    <PackageReference Include="R5T.NetStandard.OS" Version="0.0.3" />
   </ItemGroup>
 </Project>
