@@ -11,6 +11,7 @@ using R5T.Neapolis;
 using R5T.NetStandard;
 using R5T.NetStandard.IO;
 using R5T.NetStandard.IO.Paths;
+using R5T.NetStandard.IO.Paths.Extensions;
 using R5T.NetStandard.IO.Serialization;
 using R5T.NetStandard.OS;
 
@@ -559,9 +560,11 @@ namespace R5T.Tools.SVN
 
         public static int Update(FilePath svnExecutableFilePath, AbsolutePath path, ILogger logger)
         {
-            logger.LogDebug($"SVN updating {path}...");
+            var nonDirectoryIndicatedPath = PathUtilities.EnsurePathIsNotDirectoryIndicated(path.Value).AsAbsolutePath();
 
-            var arguments = $@"update ""{path}""";
+            logger.LogDebug($"SVN updating {path}..."); // Use the specified path.
+
+            var arguments = $@"update ""{nonDirectoryIndicatedPath}"""; // Use the non-directory indicated path.
 
             var outputCollector = SvnCommandServicesProvider.Run(svnExecutableFilePath, arguments);
 
@@ -577,11 +580,11 @@ namespace R5T.Tools.SVN
             var lastLine = lines.Last();
             var trimmedLastLine = lastLine.TrimEnd('.');
             var tokens = trimmedLastLine.Split(' ');
-            var revisionNumber = tokens[2];
+            var revisionNumber = tokens[tokens.Length - 1];
 
             var revision = Int32.Parse(revisionNumber);
 
-            logger.LogInformation($"SVN updated {path}.");
+            logger.LogInformation($"SVN updated {path}.\nRevision: {revision}");
 
             return revision;
         }

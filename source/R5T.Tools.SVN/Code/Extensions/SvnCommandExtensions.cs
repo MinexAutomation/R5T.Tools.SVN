@@ -9,6 +9,7 @@ using R5T.Neapolis;
 using R5T.NetStandard.Extensions;
 using R5T.NetStandard.IO;
 using R5T.NetStandard.IO.Paths;
+using R5T.NetStandard.IO.Paths.Extensions;
 using R5T.NetStandard.IO.Serialization;
 using R5T.NetStandard.OS;
 
@@ -109,6 +110,7 @@ namespace R5T.Tools.SVN
 
         /// <summary>
         /// Determine if a path is under source control.
+        /// Note: non-existent paths are NOT under source control.
         /// </summary>
         public static bool IsUnderSourceControl(this SvnCommand svnCommand, AbsolutePath path)
         {
@@ -128,6 +130,18 @@ namespace R5T.Tools.SVN
                 default:
                     return true;
             }
+        }
+
+        /// <summary>
+        /// Determine if a path is under source control.
+        /// Note: non-existent paths are NOT under source control.
+        /// </summary>
+        public static bool IsUnderSourceControl(this SvnCommand svnCommand, string path)
+        {
+            var absolutePath = path.AsAbsolutePath();
+
+            var output = svnCommand.IsUnderSourceControl(absolutePath);
+            return output;
         }
 
         public static bool HasProperty(this SvnCommand svnCommand, AbsolutePath path, string propertyName)
@@ -272,6 +286,14 @@ namespace R5T.Tools.SVN
             return revision;
         }
 
+        public static int Update(this SvnCommand svnCommand, string path)
+        {
+            var absolutePath = path.AsAbsolutePath();
+
+            var output = svnCommand.Update(absolutePath);
+            return output;
+        }
+
         public static Version GetVersion(this SvnCommand svnCommand)
         {
             var version = SvnCommandServicesProvider.GetVersion(svnCommand.SvnExecutableFilePath, svnCommand.Logger);
@@ -383,7 +405,9 @@ namespace R5T.Tools.SVN
         /// </summary>
         public static SvnStringPathStatus StatusRobust(this SvnCommand svnCommand, AbsolutePath path)
         {
-            var status = svnCommand.StatusRobust_Internal(path);
+            var nonDirectoryIndicatedPath = PathUtilities.EnsurePathIsNotDirectoryIndicated(path.Value).AsAbsolutePath();
+
+            var status = svnCommand.StatusRobust_Internal(nonDirectoryIndicatedPath);
 
             if (status.ItemStatus != ItemStatus.NotFound)
             {
