@@ -453,6 +453,9 @@ namespace R5T.Tools.SVN
             return status;
         }
 
+        /// <summary>
+        /// The default SVN status method.
+        /// </summary>
         public static SvnStringPathStatus[] StatusesDefault(this SvnCommand svnCommand, DirectoryPath directoryPath)
         {
             svnCommand.Logger.LogDebug($"Getting all SVN status results for directory path {directoryPath}...");
@@ -467,7 +470,8 @@ namespace R5T.Tools.SVN
         }
 
         /// <summary>
-        /// Note that the default depth options IS infinity.
+        /// Gets the status of a a directory, and all directory contents recursively.
+        /// Note: this is the same as <see cref="StatusesDefault(SvnCommand, DirectoryPath)"/> since the default path depth options is infinity.
         /// </summary>
         public static SvnStringPathStatus[] StatusesInfinity(this SvnCommand svnCommand, DirectoryPath directoryPath)
         {
@@ -482,6 +486,9 @@ namespace R5T.Tools.SVN
             return statuses;
         }
 
+        /// <summary>
+        /// Gets SVN status values for all directory contents recursively, disregarding any SVN ignore properties and the global SVN ignore values.
+        /// </summary>
         public static SvnStringPathStatus[] StatusesInfinityNoIgnore(this SvnCommand svnCommand, DirectoryPath directoryPath)
         {
             svnCommand.Logger.LogDebug($"Getting all SVN status results for directory path {directoryPath}...");
@@ -513,21 +520,72 @@ namespace R5T.Tools.SVN
             return status;
         }
 
-        //public static SvnFilePathStatus Status(this SvnCommand svnCommand, FilePath filePath)
-        //{
+        /// <summary>
+        /// The default method to get uncommitted changes in a directory.
+        /// Note: uses the <see cref="GetUncommittedChangesWithGitHubExceptions(SvnCommand, DirectoryPath)"/> method.
+        /// </summary>
+        /// <returns></returns>
+        public static IEnumerable<SvnStringPathStatus> GetUncommittedChanges(this SvnCommand svnCommand, DirectoryPath directoryPath)
+        {
+            var uncommittedChangesWithGitHubExceptions = svnCommand.GetUncommittedChangesWithGitHubExceptions(directoryPath);
+            return uncommittedChangesWithGitHubExceptions;
+        }
 
-        //}
+        /// <summary>
+        /// GitHub does not allow empty directories to be checked in (nor directories that only contain empty directories, i.e. recursively-empty directories).
+        /// Thus many times there are recursively empty unversioned diretories that will be flagged as an uncommitted change, but should not be considered as uncommitted simply because they can't be committed!
+        /// </summary>
+        public static IEnumerable<SvnStringPathStatus> GetUncommittedChangesWithGitHubExceptions(this SvnCommand svnCommand, DirectoryPath directoryPath)
+        {
+            var allUncommittedStatuses = svnCommand.GetAllUncommittedChanges(directoryPath);
+            foreach (var uncommittedStatus in allUncommittedStatuses)
+            {
+                // Unless it's an unversioned, recursively empty directory!
+                var isUnversioned = uncommittedStatus.ItemStatus == ItemStatus.Unversioned;
+                if (isUnversioned)
+                {
+                    // Is the path a directory?
+                    var isDirectory = PathUtilities.IsDirectory(uncommittedStatus.Path);
+                    if (isDirectory)
+                    {
+                        // Is the directory recursively empty?
+                        var isDirectoryRecursivelyEmpty = PathUtilities.IsDirectoryRecursivelyEmpty(uncommittedStatus.Path);
+                        if (isDirectoryRecursivelyEmpty)
+                        {
+                            continue; // Nothing to see here.
+                        }
+                    }
+                }
 
-        //public static SvnDirectoryPathStatus Status(this SvnCommand svnCommand, DirectoryPath directoryPath)
-        //{
+                yield return uncommittedStatus;
+            }
+        }
 
-        //}
+        /// <summary>
+        /// Any directory contents with an <see cref="ItemStatus"/> other than <see cref="ItemStatus.NoModifications"/> is an uncommited change.
+        /// </summary>
+        public static IEnumerable<SvnStringPathStatus> GetAllUncommittedChanges(this SvnCommand svnCommand, DirectoryPath directoryPath)
+        {
+            var statuses = svnCommand.StatusesDefault(directoryPath);
 
-        //public static SvnPathStatus[] StatusOfChildren(this SvnCommand svnCommand, DirectoryPath directoryPath, bool recursive = true)
-        //{
-        //    // Note that the recursive argument translates to the --depth infinity argument, which does not ACTUALLY give the status of all elements in the directory tree!
-        //    // Only those unversioned elements that are within a versioned directory are included. For example, elements within an unversioned directory (which are themseles unversioned), would not appear in the SVN status --depth infinity output.
-        //}
+            foreach (var status in statuses)
+            {
+                // Anything with an SVN status other than no-modifications is an uncommitted change.
+                var anythingOtherThanNoModifications = status.ItemStatus != ItemStatus.NoModifications;
+                if (anythingOtherThanNoModifications)
+                {
+                    yield return status;
+                }
+            }
+        }
+
+        public static bool HasUncommittedChanges(this SvnCommand svnCommand, DirectoryPath directoryPath, out IEnumerable<SvnStringPathStatus> uncommittedChanges)
+        {
+            uncommittedChanges = svnCommand.GetUncommittedChanges(directoryPath);
+
+            var output = uncommittedChanges.Count() > 1;
+            return output;
+        }
 
         #endregion
 
