@@ -468,6 +468,9 @@ namespace R5T.Tools.SVN
             return argumentsBuilder;
         }
 
+        /// <summary>
+        /// Sets command flags to get an infinite-depth SVN status command that includes ignored items (does not respect svn:ignore and global ignore properties).
+        /// </summary>
         public static IArgumentsBuilder GetStatusVerboseDepthInfinityNoIgnore(AbsolutePath path)
         {
             var argumentsBuilder = SvnCommandServicesProvider.GetStatusVerboseDepthInfinity(path)
@@ -493,6 +496,9 @@ namespace R5T.Tools.SVN
             return statuses;
         }
 
+        /// <summary>
+        /// The default SVN status method.
+        /// </summary>
         public static SvnStringPathStatus[] GetStatuses(FilePath svnExecutableFilePath, IArgumentsBuilder argumentsBuilder)
         {
             var xmlStatusType = SvnCommandServicesProvider.GetXmlStatusType(svnExecutableFilePath, argumentsBuilder);
