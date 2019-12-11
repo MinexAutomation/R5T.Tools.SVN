@@ -31,6 +31,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "R5T.NetStandard.OS", "..\..
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "R5T.NetStandard.OS.Types", "..\..\R5T.NetStandard.OS.Types\source\R5T.NetStandard.OS.Types\R5T.NetStandard.OS.Types.csproj", "{41A6CACC-7176-4502-A520-596D7EB224B3}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "R5T.NetStandard.IO.Paths.Base", "..\..\R5T.NetStandard.IO.Paths.Base\source\R5T.NetStandard.IO.Paths.Base\R5T.NetStandard.IO.Paths.Base.csproj", "{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -197,6 +199,18 @@ Global
 		{41A6CACC-7176-4502-A520-596D7EB224B3}.Release|x64.Build.0 = Release|Any CPU
 		{41A6CACC-7176-4502-A520-596D7EB224B3}.Release|x86.ActiveCfg = Release|Any CPU
 		{41A6CACC-7176-4502-A520-596D7EB224B3}.Release|x86.Build.0 = Release|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Debug|x64.Build.0 = Debug|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Debug|x86.Build.0 = Debug|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Release|x64.ActiveCfg = Release|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Release|x64.Build.0 = Release|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Release|x86.ActiveCfg = Release|Any CPU
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -212,6 +226,7 @@ Global
 		{CC257BBE-0633-4912-A494-C75FE48326F3} = {B738B725-0D6E-4385-87D7-EF7A6024AED4}
 		{D5714F3C-15DC-47F4-AFCC-1855D6227CF8} = {B738B725-0D6E-4385-87D7-EF7A6024AED4}
 		{41A6CACC-7176-4502-A520-596D7EB224B3} = {B738B725-0D6E-4385-87D7-EF7A6024AED4}
+		{205CFAE2-6FE9-4D48-A6A4-07D370D865FC} = {B738B725-0D6E-4385-87D7-EF7A6024AED4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7D3F635-F6D1-49BB-96F9-496BBED98A7E}
